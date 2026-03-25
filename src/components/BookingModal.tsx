@@ -15,6 +15,20 @@ export default function BookingModal() {
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
     window.addEventListener('open-booking-modal', handleOpen);
+
+    // Show popup automatically after 3 seconds if not already seen in this session
+    const hasSeenBooking = sessionStorage.getItem('hasSeenBookingModal');
+    if (!hasSeenBooking) {
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+        sessionStorage.setItem('hasSeenBookingModal', 'true');
+      }, 3000);
+      return () => {
+        window.removeEventListener('open-booking-modal', handleOpen);
+        clearTimeout(timer);
+      };
+    }
+
     return () => window.removeEventListener('open-booking-modal', handleOpen);
   }, []);
 
@@ -53,7 +67,13 @@ export default function BookingModal() {
       }, 3000);
     } catch (err: any) {
       console.error('Error saving to Supabase:', err);
-      setError('提交失败，请稍后再试或直接拨打电话联系我们。');
+      if (err.code === '42P01') {
+        setError('数据库表不存在，请在 Supabase 后台创建 bookings 表。');
+      } else if (err.code === '42501') {
+        setError('权限不足，请在 Supabase 后台开启 RLS 并添加插入政策。');
+      } else {
+        setError('提交失败，请稍后再试或直接拨打电话联系我们。');
+      }
     } finally {
       setIsSubmitting(false);
     }

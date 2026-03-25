@@ -3,7 +3,19 @@ import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn('GEMINI_API_KEY is not defined. Chatbot will not work.');
+      return null;
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 interface Message {
   id: string;
@@ -47,6 +59,10 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
+      const ai = getAI();
+      if (!ai) {
+        throw new Error('AI not initialized');
+      }
       // Create chat history for context
       const chatHistory = messages.map(msg => `${msg.role === 'user' ? '用户' : '客服'}: ${msg.content}`).join('\n');
       const prompt = `

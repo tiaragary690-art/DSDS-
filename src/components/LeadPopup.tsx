@@ -12,11 +12,12 @@ export default function LeadPopup() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if the user has already seen the popup in this session
+    // The popup is now disabled from showing automatically as requested.
+    // If you want to enable it again, uncomment the code below.
+    /*
     const hasSeenPopup = sessionStorage.getItem('hasSeenLeadPopup');
     
     if (!hasSeenPopup) {
-      // Show popup after 3 seconds
       const timer = setTimeout(() => {
         setIsOpen(true);
         sessionStorage.setItem('hasSeenLeadPopup', 'true');
@@ -24,6 +25,7 @@ export default function LeadPopup() {
       
       return () => clearTimeout(timer);
     }
+    */
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,7 +57,13 @@ export default function LeadPopup() {
       }, 3000);
     } catch (err: any) {
       console.error('Error saving to Supabase:', err);
-      setError('提交失败，请重试。');
+      if (err.code === '42P01') {
+        setError('数据库表不存在，请在 Supabase 后台创建 bookings 表。');
+      } else if (err.code === '42501') {
+        setError('权限不足，请在 Supabase 后台开启 RLS 并添加插入政策。');
+      } else {
+        setError('提交失败，请重试。');
+      }
     } finally {
       setIsSubmitting(false);
     }

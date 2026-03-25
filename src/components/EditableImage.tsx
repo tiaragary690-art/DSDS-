@@ -38,11 +38,16 @@ export default function EditableImage({ id, defaultSrc, alt, className, referrer
 
   const handleReset = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const overrides = JSON.parse(localStorage.getItem('lt_image_overrides') || '{}');
-    delete overrides[id];
-    localStorage.setItem('lt_image_overrides', JSON.stringify(overrides));
-    window.dispatchEvent(new Event('image-override-updated'));
-    setSrc(defaultSrc);
+    try {
+      const overrides = JSON.parse(localStorage.getItem('lt_image_overrides') || '{}');
+      delete overrides[id];
+      localStorage.setItem('lt_image_overrides', JSON.stringify(overrides));
+      window.dispatchEvent(new Event('image-override-updated'));
+      setSrc(defaultSrc);
+    } catch (err) {
+      console.error('Error resetting image override:', err);
+      setSrc(defaultSrc);
+    }
   };
 
   return (
